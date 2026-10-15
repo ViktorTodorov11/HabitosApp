@@ -14,7 +14,7 @@ class PantallaAjustes extends StatefulWidget {
 }
 
 class _PantallaAjustesState extends State<PantallaAjustes> {
-  final PreferenciasService _servicio = PreferenciasService();
+  final shared_preferences _servicio = shared_preferences();
   bool _cargando = true;
   bool _oscuro = false; // tema oscuro (bool)
   double _tamano = 16.0; // tamaño de letra (double)

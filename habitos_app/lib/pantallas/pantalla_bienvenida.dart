@@ -15,7 +15,7 @@ class PantallaBienvenida extends StatefulWidget {
 
 class _PantallaBienvenidaState extends State<PantallaBienvenida> {
   // Servicio de persistencia (las pantallas nunca usan SharedPreferences directamente)
-  final PreferenciasService _servicio = PreferenciasService();
+  final shared_preferences _servicio = shared_preferences();
   // Controladores para leer lo que el usuario escribe en cada campo
   final TextEditingController _nombreCtrl = TextEditingController();
   final TextEditingController _objetivoCtrl = TextEditingController();

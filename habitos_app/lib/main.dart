@@ -18,7 +18,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final PreferenciasService _servicio = PreferenciasService();
+  final shared_preferences _servicio = shared_preferences();
 
   bool _cargando = true;
   bool _bienvenidaHecha = false;

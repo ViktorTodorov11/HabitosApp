@@ -13,7 +13,7 @@ class PantallaGestionHabitos extends StatefulWidget {
 }
 
 class _PantallaGestionHabitosState extends State<PantallaGestionHabitos> {
-  final PreferenciasService _servicio = PreferenciasService();
+  final shared_preferences _servicio = shared_preferences();
   List<Habito> _habitos = []; // hábitos leídos de SharedPreferences
   bool _cargando = true; // true mientras se leen los datos
 

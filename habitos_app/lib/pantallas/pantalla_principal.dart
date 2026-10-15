@@ -19,7 +19,7 @@ class PantallaPrincipal extends StatefulWidget {
 
 class _PantallaPrincipalState extends State<PantallaPrincipal> {
   // Servicio de persistencia
-  final PreferenciasService _servicio = PreferenciasService();
+  final shared_preferences _servicio = shared_preferences();
 
   bool _cargando = true; // true mientras se leen los datos
   String _nombre = ''; // nombre del usuario (String)

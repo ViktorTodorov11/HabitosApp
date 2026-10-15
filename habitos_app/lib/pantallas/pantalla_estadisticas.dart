@@ -11,7 +11,7 @@ class PantallaEstadisticas extends StatefulWidget {
 }
 
 class _PantallaEstadisticasState extends State<PantallaEstadisticas> {
-  final PreferenciasService _servicio = PreferenciasService();
+  final shared_preferences _servicio = shared_preferences();
   bool _cargando = true; // true mientras se leen los datos
   List<Habito> _habitos = [];
   int _aperturas = 0; // veces que se ha abierto la app (int)

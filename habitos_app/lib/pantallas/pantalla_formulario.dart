@@ -14,7 +14,7 @@ class PantallaFormulario extends StatefulWidget {
 }
 
 class _PantallaFormularioState extends State<PantallaFormulario> {
-  final PreferenciasService _servicio = PreferenciasService();
+  final shared_preferences _servicio = shared_preferences();
   // Controlador del campo de texto del nombre
   final TextEditingController _nombreCtrl = TextEditingController();
   int _color = 0xFF2196F3; // azul por defecto
