@@ -58,36 +58,67 @@ class _PantallaBienvenidaState extends State<PantallaBienvenida> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Bienvenido a HabitosApp')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Campo de texto para el nombre
-            TextField(
-              controller: _nombreCtrl,
-              decoration: const InputDecoration(labelText: 'Tu nombre'),
-            ),
-            const SizedBox(height: 16),
-            // Campo para el objetivo: el teclado es numérico
-            TextField(
-              controller: _objetivoCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Objetivo diario de hábitos',
+      appBar: AppBar(
+        title: const Text('Bienvenido a HabitosApp'),
+        centerTitle: true,
+      ),
+      // Center + scroll: queda centrado y no da error cuando sale el teclado
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              // Icono grande de cabecera
+              Icon(
+                Icons.check_circle_outline,
+                size: 80,
+                color: Theme.of(context).colorScheme.primary,
               ),
-            ),
-            const SizedBox(height: 16),
-            // Solo mostramos el error si hay alguno
-            if (_error.isNotEmpty)
-              Text(_error, style: const TextStyle(color: Colors.red)),
-            const SizedBox(height: 16),
-            // Botón que guarda los datos
-            ElevatedButton(
-              onPressed: _guardar,
-              child: const Text('Empezar'),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                'Empieza a crear buenos hábitos',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 32),
+              // Campo de texto para el nombre
+              TextField(
+                controller: _nombreCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Tu nombre',
+                  prefixIcon: Icon(Icons.person),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Campo para el objetivo: el teclado es numérico
+              TextField(
+                controller: _objetivoCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Objetivo diario de hábitos',
+                  prefixIcon: Icon(Icons.flag),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Solo mostramos el error si hay alguno
+              if (_error.isNotEmpty)
+                Text(
+                  _error,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              const SizedBox(height: 16),
+              // Botón que guarda los datos (ocupa todo el ancho)
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _guardar,
+                  child: const Text('Empezar'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

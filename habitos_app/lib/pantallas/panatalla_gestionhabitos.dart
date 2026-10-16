@@ -63,7 +63,10 @@ class _PantallaGestionHabitosState extends State<PantallaGestionHabitos> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Gestión de hábitos')),
+      appBar: AppBar(
+        title: const Text('Gestión de hábitos'),
+        centerTitle: true,
+      ),
       // Botón flotante "+" para crear un hábito nuevo
       floatingActionButton: FloatingActionButton(
         onPressed: () => _abrirFormulario(null),
@@ -73,31 +76,55 @@ class _PantallaGestionHabitosState extends State<PantallaGestionHabitos> {
       body: _cargando
           ? const Center(child: CircularProgressIndicator())
           : _habitos.isEmpty
-          ? const Center(child: Text('Todavía no hay hábitos'))
+          ? Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.playlist_add,
+                size: 64, color: Colors.grey.shade500),
+            const SizedBox(height: 8),
+            const Text('Todavía no hay hábitos'),
+          ],
+        ),
+      )
           : ListView.builder(
+        // Espacio abajo para que el botón flotante no tape el último
+        padding: const EdgeInsets.only(top: 8, bottom: 88),
         itemCount: _habitos.length,
         itemBuilder: (context, i) {
           final habito = _habitos[i];
-          return ListTile(
-            // Círculo con el color del hábito
-            leading: CircleAvatar(
-              backgroundColor: Color(habito.color),
-              radius: 12,
-            ),
-            title: Text(habito.nombre),
-            // Botones de editar y borrar a la derecha
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () => _abrirFormulario(habito),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () => _borrar(habito),
-                ),
-              ],
+          // Cada hábito va dentro de una tarjeta
+          return Card(
+            margin:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: ListTile(
+              // Círculo con el color del hábito
+              leading: CircleAvatar(
+                backgroundColor: Color(habito.color),
+                radius: 16,
+              ),
+              title: Text(
+                habito.nombre,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              // Botones de editar y borrar a la derecha
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () => _abrirFormulario(habito),
+                  ),
+                  // El de borrar en rojo para que se distinga
+                  IconButton(
+                    icon: Icon(
+                      Icons.delete,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    onPressed: () => _borrar(habito),
+                  ),
+                ],
+              ),
             ),
           );
         },

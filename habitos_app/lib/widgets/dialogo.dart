@@ -5,6 +5,8 @@ Future<bool> mostrarConfirmacion(BuildContext context, String titulo, String men
     context: context,
     builder: (context) {
       return AlertDialog(
+        // Icono de aviso encima del título
+        icon: const Icon(Icons.warning_amber_rounded, size: 36),
         title: Text(titulo),
         content: Text(mensaje),
         actions: [

@@ -26,10 +26,23 @@ class SelectorColor extends StatelessWidget {
         bool esIgual = colorSeleccionado == color.value;
         return GestureDetector(
           onTap: () => onColorCambiado(color.value),
-          child: CircleAvatar(
-            backgroundColor: color,
-            radius: 18,
-            child: esIgual ? const Icon(Icons.check, color: Colors.white) : null,
+          // El color elegido se rodea con un aro para que se note más
+          child: Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: esIgual
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Colors.transparent,
+                width: 2,
+              ),
+            ),
+            child: CircleAvatar(
+              backgroundColor: color,
+              radius: 18,
+              child: esIgual ? const Icon(Icons.check, color: Colors.white) : null,
+            ),
           ),
         );
       }).toList(),

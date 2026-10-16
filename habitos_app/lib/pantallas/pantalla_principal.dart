@@ -93,10 +93,13 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
     final visibles = _ocultarCompletados
         ? _habitos.where((h) => !h.estaHechoHoy()).toList()
         : _habitos;
+    // Colores del tema para la tarjeta de cabecera
+    final colores = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('HabitosApp'),
+        centerTitle: true,
         // Botones de navegación a las otras pantallas
         actions: [
           IconButton(
@@ -120,21 +123,42 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
       ),
       body: Column(
         children: [
-          // Cabecera: saludo y progreso del día
-          Padding(
-            padding: const EdgeInsets.all(16),
+          // Cabecera: tarjeta de color con el saludo y el progreso del día
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: colores.primaryContainer,
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('¡Hola, $_nombre!',
-                    style: Theme.of(context).textTheme.headlineSmall),
+                Text(
+                  '¡Hola, $_nombre!',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colores.onPrimaryContainer,
+                  ),
+                ),
                 const SizedBox(height: 8),
-                // Ejemplo: "2 de 5 hábitos"
-                Text('$hechos de $_objetivo hábitos'),
-                const SizedBox(height: 8),
-                // Barra de progreso; clamp limita el valor entre 0 y 1
-                LinearProgressIndicator(
-                  value: (hechos / _objetivo).clamp(0.0, 1.0),
+                // Ejemplo: "2 de 5 hábitos". Si se llega al objetivo, mensaje de ánimo
+                Text(
+                  hechos >= _objetivo
+                      ? '¡Objetivo cumplido! 🎉 ($hechos de $_objetivo)'
+                      : '$hechos de $_objetivo hábitos hoy',
+                  style: TextStyle(color: colores.onPrimaryContainer),
+                ),
+                const SizedBox(height: 12),
+                // Barra de progreso con bordes redondeados;
+                // clamp limita el valor entre 0 y 1
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: (hechos / _objetivo).clamp(0.0, 1.0),
+                    minHeight: 10,
+                  ),
                 ),
               ],
             ),
@@ -142,10 +166,21 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
           // Expanded hace que la lista ocupe el resto de la pantalla
           Expanded(
             child: visibles.isEmpty
-            // Si no hay hábitos que mostrar, mensaje informativo
-                ? const Center(child: Text('No hay hábitos para mostrar'))
+            // Si no hay hábitos que mostrar, icono + mensaje informativo
+                ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.inbox_outlined,
+                      size: 64, color: Colors.grey.shade500),
+                  const SizedBox(height: 8),
+                  const Text('No hay hábitos para mostrar'),
+                ],
+              ),
+            )
             // ListView.builder crea los elementos de la lista uno a uno
                 : ListView.builder(
+              padding: const EdgeInsets.only(bottom: 16),
               itemCount: visibles.length,
               itemBuilder: (context, i) {
                 final habito = visibles[i];

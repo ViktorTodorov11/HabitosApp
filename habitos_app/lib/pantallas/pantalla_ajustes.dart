@@ -61,64 +61,85 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ajustes')),
+      appBar: AppBar(
+        title: const Text('Ajustes'),
+        centerTitle: true,
+      ),
       body: _cargando
           ? const Center(child: CircularProgressIndicator())
           : ListView(
+        padding: const EdgeInsets.all(16),
         children: [
-          // Interruptor de tema oscuro
-          SwitchListTile(
-            title: const Text('Tema oscuro'),
-            value: _oscuro,
-            onChanged: (valor) async {
-              setState(() {
-                _oscuro = valor;
-              });
-              // Guardamos el valor y avisamos a main.dart para cambiar el tema
-              await _servicio.setTemaOscuro(valor);
-              await widget.onCambio();
-            },
-          ),
-          // Control deslizante del tamaño de letra (de 12 a 24)
-          ListTile(
-            title: Text('Tamaño de letra: ${_tamano.round()}'),
-            subtitle: Slider(
-              min: 12,
-              max: 24,
-              divisions: 12, // un paso por cada punto de tamaño
-              value: _tamano,
-              // Mientras se arrastra solo actualizamos la pantalla
-              onChanged: (valor) {
-                setState(() {
-                  _tamano = valor;
-                });
-              },
-              // Solo guardamos al soltar el control deslizante
-              onChangeEnd: (valor) async {
-                await _servicio.setTamanoLetra(valor);
-                await widget.onCambio();
-              },
+          // Los tres ajustes van agrupados en una tarjeta
+          Card(
+            child: Column(
+              children: [
+                // Interruptor de tema oscuro
+                SwitchListTile(
+                  secondary: const Icon(Icons.dark_mode),
+                  title: const Text('Tema oscuro'),
+                  value: _oscuro,
+                  onChanged: (valor) async {
+                    setState(() {
+                      _oscuro = valor;
+                    });
+                    // Guardamos el valor y avisamos a main.dart para cambiar el tema
+                    await _servicio.setTemaOscuro(valor);
+                    await widget.onCambio();
+                  },
+                ),
+                const Divider(height: 1),
+                // Control deslizante del tamaño de letra (de 12 a 24)
+                ListTile(
+                  leading: const Icon(Icons.text_fields),
+                  title: Text('Tamaño de letra: ${_tamano.round()}'),
+                  subtitle: Slider(
+                    min: 12,
+                    max: 24,
+                    divisions: 12, // un paso por cada punto de tamaño
+                    value: _tamano,
+                    // Mientras se arrastra solo actualizamos la pantalla
+                    onChanged: (valor) {
+                      setState(() {
+                        _tamano = valor;
+                      });
+                    },
+                    // Solo guardamos al soltar el control deslizante
+                    onChangeEnd: (valor) async {
+                      await _servicio.setTamanoLetra(valor);
+                      await widget.onCambio();
+                    },
+                  ),
+                ),
+                const Divider(height: 1),
+                // Interruptor para ocultar los hábitos completados hoy
+                SwitchListTile(
+                  secondary: const Icon(Icons.visibility_off),
+                  title: const Text('Ocultar hábitos completados hoy'),
+                  value: _ocultar,
+                  onChanged: (valor) async {
+                    setState(() {
+                      _ocultar = valor;
+                    });
+                    await _servicio.setOcultarCompletados(valor);
+                    await widget.onCambio();
+                  },
+                ),
+              ],
             ),
           ),
-          // Interruptor para ocultar los hábitos completados hoy
-          SwitchListTile(
-            title: const Text('Ocultar hábitos completados hoy'),
-            value: _ocultar,
-            onChanged: (valor) async {
-              setState(() {
-                _ocultar = valor;
-              });
-              await _servicio.setOcultarCompletados(valor);
-              await widget.onCambio();
-            },
-          ),
-          const Divider(),
-          // Botón para borrar todos los datos
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: ElevatedButton(
+          const SizedBox(height: 24),
+          // Botón rojo con icono para borrar todos los datos
+          SizedBox(
+            height: 48,
+            child: ElevatedButton.icon(
               onPressed: _borrarDatos,
-              child: const Text('Borrar todos los datos'),
+              icon: const Icon(Icons.delete_forever),
+              label: const Text('Borrar todos los datos'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError,
+              ),
             ),
           ),
         ],

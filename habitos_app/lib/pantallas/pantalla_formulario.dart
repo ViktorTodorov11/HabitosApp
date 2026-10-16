@@ -79,17 +79,29 @@ class _PantallaFormularioState extends State<PantallaFormulario> {
       appBar: AppBar(
         // El título cambia según estemos creando o editando
         title: Text(widget.habito == null ? 'Nuevo hábito' : 'Editar hábito'),
+        centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Campo para el nombre del hábito
             TextField(
               controller: _nombreCtrl,
-              decoration: const InputDecoration(labelText: 'Nombre del hábito'),
+              decoration: const InputDecoration(
+                labelText: 'Nombre del hábito',
+                prefixIcon: Icon(Icons.edit),
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 24),
+            // Etiqueta encima de los colores
+            Text(
+              'Elige un color',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 12),
             // Widget propio para elegir el color
             SelectorColor(
               colorSeleccionado: _color,
@@ -102,11 +114,20 @@ class _PantallaFormularioState extends State<PantallaFormulario> {
             const SizedBox(height: 16),
             // Mostramos el error solo si existe
             if (_error.isNotEmpty)
-              Text(_error, style: const TextStyle(color: Colors.red)),
+              Text(
+                _error,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _guardar,
-              child: const Text('Guardar'),
+            // Botón de guardar (ocupa todo el ancho)
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: _guardar,
+                icon: const Icon(Icons.save),
+                label: const Text('Guardar'),
+              ),
             ),
           ],
         ),

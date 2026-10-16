@@ -40,31 +40,85 @@ class _PantallaEstadisticasState extends State<PantallaEstadisticas> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Estadísticas')),
+      appBar: AppBar(
+        title: const Text('Estadísticas'),
+        centerTitle: true,
+      ),
       body: _cargando
           ? const Center(child: CircularProgressIndicator())
           : ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Datos generales de la app
-          Text('Veces que se ha abierto la app: $_aperturas'),
+          // Datos generales de la app dentro de una tarjeta
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.phone_android),
+                  title: const Text('Veces que se ha abierto la app'),
+                  trailing: Text(
+                    '$_aperturas',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.access_time),
+                  title: const Text('Última apertura'),
+                  subtitle: Text(_ultimaApertura),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Título de la sección de hábitos
+          Text(
+            'Tus hábitos',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text('Última apertura: $_ultimaApertura'),
-          const Divider(height: 32),
           // Mensaje si todavía no hay hábitos
           if (_habitos.isEmpty) const Text('Todavía no hay hábitos'),
-          // Una fila por cada hábito con su racha y su total
-          ..._habitos.map((h) => ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Color(h.color),
-              radius: 12,
-            ),
-            title: Text(h.nombre),
-            subtitle: Text(
-              // calcularRacha() está en la clase Habito
-              'Racha actual: ${h.calcularRacha()} días\n'
-              // Cada fecha de la lista es un día completado
-                  'Total completados: ${h.fechasCompletadas.length} días',
+          // Una tarjeta por cada hábito con su racha y su total
+          ..._habitos.map((h) => Card(
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: Color(h.color),
+                radius: 16,
+              ),
+              title: Text(
+                h.nombre,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.local_fire_department,
+                          size: 18, color: Colors.orange),
+                      const SizedBox(width: 4),
+                      // calcularRacha() está en la clase Habito
+                      Text('Racha actual: ${h.calcularRacha()} días'),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Icon(Icons.event_available,
+                          size: 18, color: Colors.green),
+                      const SizedBox(width: 4),
+                      // Cada fecha de la lista es un día completado
+                      Text(
+                          'Total completados: ${h.fechasCompletadas.length} días'),
+                    ],
+                  ),
+                ],
+              ),
             ),
           )),
         ],

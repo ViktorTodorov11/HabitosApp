@@ -63,6 +63,7 @@ class _MyAppState extends State<MyApp> {
     }
 
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'HabitosApp',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
