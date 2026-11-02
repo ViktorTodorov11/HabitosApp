@@ -139,7 +139,7 @@ class shared_preferences {
     if (usuarios.any((u) => u.email.toLowerCase() == 'admin@habitos.app')) return;
     usuarios.add(Usuario(
       id: 'admin',
-      nombre: 'Administrador',
+      nombre: 'Admin',
       email: 'admin@habitos.app',
       password: 'admin123',
       fechaCreacion: DateTime.now().toString().split(' ')[0],
