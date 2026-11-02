@@ -27,28 +27,28 @@ class _PantallaAccesoState extends State<PantallaAcceso> {
 
   /// Método para validar las credenciales e iniciar sesión
   Future<void> _iniciarSesion() async {
-    final usuario = _usuarioCtrl.text.trim();
+    final textoIngresado = _usuarioCtrl.text.trim();
     final pass = _passwordCtrl.text.trim();
 
     // Validación de campos vacíos
-    if (usuario.isEmpty || pass.isEmpty) {
+    if (textoIngresado.isEmpty || pass.isEmpty) {
       setState(() => _error = 'Por favor, rellena todos los campos');
       return;
     }
 
-   // Comprobacion de la contraseña
+    // Comprobación de las credenciales a través del servicio
     setState(() { _cargando = true; _error = ''; });
-    final Usuario? cuenta = await _servicio.comprobarAcceso(usuario, pass);
+    final Usuario? cuenta = await _servicio.comprobarAcceso(textoIngresado, pass);
     if (!mounted) return;
     setState(() => _cargando = false);
 
     if (cuenta == null) {
-    setState(() => _error = 'Usuario o contraseña incorrectos');
-    return;
+      setState(() => _error = 'Usuario o contraseña incorrectos');
+      return;
     }
 
-    // Comprobación de acceso Administrador vs Usuario Estándar
-    if (usuario == 'admin' && pass == '1234') {
+    // Comprobación de acceso Administrador vs Usuario Estándar usando el objeto devuelto
+    if (cuenta.nombre.toLowerCase() == 'admin') {
       // Redirige al panel de administración
       Navigator.pushReplacement(
         context,
@@ -60,13 +60,14 @@ class _PantallaAccesoState extends State<PantallaAcceso> {
         context,
         MaterialPageRoute(
           builder: (context) => PantallaHabitos(
-              nombreUsuario: usuario,
-              usuarioId: cuenta.id,
+            nombreUsuario: cuenta.nombre,
+            usuarioId: cuenta.id,
           ),
         ),
       );
     }
   }
+
   @override
   void initState() {
     super.initState();
