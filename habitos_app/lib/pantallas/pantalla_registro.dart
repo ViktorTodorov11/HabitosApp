@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/campo_texto_app.dart';
 import '../widgets/boton_principal.dart';
+import '../servicios/shared_preferences.dart';
 
 class RegistroPage extends StatefulWidget {
   const RegistroPage({super.key});
@@ -13,11 +14,38 @@ class _RegistroPageState extends State<RegistroPage> {
   final _nombreCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  final shared_preferences _servicio = shared_preferences();
   String _mensaje = '';
+  bool _cargando false;
 
-  void _registrar() {
-    if (_nombreCtrl.text.isEmpty || _emailCtrl.text.isEmpty || _passCtrl.text.isEmpty) {
+  Future<void> _registrar() async {
+    final nombre = _nombreCtrl.text.trim();
+    final email = _emailCtrl.text.trim();
+    final pass = _passCtrl.text.trim();
+    if (nombre.isEmpty || email.isEmpty || pass.isEmpty) {
       setState(() => _mensaje = 'Rellena todos los campos');
+      return;
+    }
+    if (!email.contains('@') || !email.contains('.')) {
+      setState(() => _mensaje = 'Escribe un correo electrónico válido');
+      return;
+    }
+    if (pass.length < 4) {
+      setState(() => _mensaje = 'La contraseña debe tener al menos 4 caracteres');
+      return;
+    }
+
+    setState(() { _cargando = true; _mensaje = ''; });
+    final correcto = await _servicio.registrarUsuario(
+      nombre: nombre,
+      email: email,
+      password: pass,
+    );
+    if (!mounted) return;
+    setState(() => _cargando = false);
+
+    if (!correcto) {
+      setState(() => _mensaje = 'Ya existe una cuenta con ese correo');
       return;
     }
 
@@ -26,6 +54,15 @@ class _RegistroPageState extends State<RegistroPage> {
       SnackBar(content: Text('Usuario registrado el $fechaCreacion')),
     );
     Navigator.pop(context);
+  }
+
+  // 🟨 NUEVO ACT02: liberar los controladores.
+  @override
+  void dispose() {
+    _nombreCtrl.dispose();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -41,7 +78,7 @@ class _RegistroPageState extends State<RegistroPage> {
             CampoTextoApp(etiqueta: 'Contraseña', controlador: _passCtrl, ocultarTexto: true, icono: Icons.lock),
             if (_mensaje.isNotEmpty) Text(_mensaje, style: const TextStyle(color: Colors.red)),
             const SizedBox(height: 20),
-            BotonPrincipal(texto: 'Registrarse', onPressed: _registrar),
+            BotonPrincipal(texto: _cargando ? 'Registrando...' : 'Registrarse', onPressed: _cargando ? () {} : _registrar),
           ],
         ),
       ),
