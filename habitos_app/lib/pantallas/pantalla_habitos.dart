@@ -5,18 +5,21 @@ import '../widgets/tarjeta_habito.dart';
 import '../widgets/dialogo.dart';
 import 'pantalla_editar_habito.dart';
 import 'pantalla_estadisticas.dart';
+import 'pantalla_ajustes.dart';
 import 'pantalla_acceso.dart';
 
-class HabitosPage extends StatefulWidget {
+/// Pantalla principal que muestra el listado de hábitos del usuario
+class PantallaHabitos extends StatefulWidget {
   final String nombreUsuario;
 
-  const HabitosPage({super.key, required this.nombreUsuario});
+  const PantallaHabitos({super.key, required this.nombreUsuario});
 
   @override
-  State<HabitosPage> createState() => _HabitosPageState();
+  State<PantallaHabitos> createState() => _PantallaHabitosState();
 }
 
-class _HabitosPageState extends State<HabitosPage> {
+class _PantallaHabitosState extends State<PantallaHabitos> {
+  // Instancia del servicio de almacenamiento local
   final shared_preferences _servicio = shared_preferences();
   List<Habito> _habitos = [];
   bool _cargando = true;
@@ -27,14 +30,17 @@ class _HabitosPageState extends State<HabitosPage> {
     _cargarHabitos();
   }
 
+  /// Carga la lista de hábitos desde SharedPreferences
   Future<void> _cargarHabitos() async {
     final habitos = await _servicio.getHabitos();
+    if (!mounted) return;
     setState(() {
       _habitos = habitos;
       _cargando = false;
     });
   }
 
+  /// Muestra un diálogo de confirmación y elimina un hábito
   Future<void> _eliminarHabito(Habito habito) async {
     final confirmado = await mostrarConfirmacion(
       context,
@@ -55,28 +61,53 @@ class _HabitosPageState extends State<HabitosPage> {
       appBar: AppBar(
         title: Text('Hábitos de ${widget.nombreUsuario}'),
         actions: [
+          // Botón para acceder a las estadísticas
           IconButton(
             icon: const Icon(Icons.bar_chart),
+            tooltip: 'Estadísticas',
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const EstadisticasPage()),
             ),
           ),
+          // Botón para acceder a la configuración / ajustes
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Ajustes',
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PantallaAjustes(
+                    onCambio: () async {
+                      await _cargarHabitos();
+                    },
+                  ),
+                ),
+              );
+              _cargarHabitos();
+            },
+          ),
+          // Botón para cerrar sesión y volver a la pantalla de acceso
           IconButton(
             icon: const Icon(Icons.logout),
+            tooltip: 'Cerrar sesión',
             onPressed: () => Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const LoginPage()),
+              MaterialPageRoute(builder: (context) => const PantallaAcceso()),
             ),
           )
         ],
       ),
+      // Botón flotante para crear un nuevo hábito
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () async {
           await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const PantallaEditarHabito()),
+            MaterialPageRoute(
+              builder: (context) => const PantallaEditarHabito(),
+            ),
           );
           _cargarHabitos();
         },
@@ -88,29 +119,36 @@ class _HabitosPageState extends State<HabitosPage> {
           : ListView.builder(
         itemCount: _habitos.length,
         itemBuilder: (context, i) {
-          final h = _habitos[i];
+          final habito = _habitos[i];
           return TarjetaHabito(
-            nombre: h.nombre,
-            color: h.color,
-            completadoHoy: h.estaHechoHoy(),
+            nombre: habito.nombre,
+            color: habito.color,
+            completadoHoy: habito.estaHechoHoy(),
+            // Marcar o desmarcar hábito para el día de hoy
             onComplete: (val) async {
               final hoy = DateTime.now().toString().split(' ')[0];
               if (val == true) {
-                h.fechasCompletadas.add(hoy);
+                if (!habito.fechasCompletadas.contains(hoy)) {
+                  habito.fechasCompletadas.add(hoy);
+                }
               } else {
-                h.fechasCompletadas.remove(hoy);
+                habito.fechasCompletadas.remove(hoy);
               }
               await _servicio.guardarHabitos(_habitos);
               setState(() {});
             },
+            // Abrir formulario para editar el hábito
             onEdit: () async {
               await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => PantallaEditarHabito(habito: h)),
+                MaterialPageRoute(
+                  builder: (context) => PantallaEditarHabito(habito: habito),
+                ),
               );
               _cargarHabitos();
             },
-            onDelete: () => _eliminarHabito(h),
+            // Eliminar el hábito actual
+            onDelete: () => _eliminarHabito(habito),
           );
         },
       ),

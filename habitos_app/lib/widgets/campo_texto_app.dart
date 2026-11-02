@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Componente reutilizable para los campos de texto con diseño unificado
 class CampoTextoApp extends StatelessWidget {
   final String etiqueta;
   final TextEditingController controlador;
@@ -19,6 +20,7 @@ class CampoTextoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
+      // Configuración correcta de márgenes simétricos
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextField(
         controller: controlador,

@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import '../servicios/shared_preferences.dart';
 import '../widgets/dialogo.dart';
 
-// Ajustes: tema, tamaño de letra, ocultar completados y borrar datos.
+/// Pantalla de configuración y ajustes de la aplicación para el usuario
 class PantallaAjustes extends StatefulWidget {
-  // Función de main.dart: la llamamos tras cada cambio para que se aplique
-  final Future<void> Function() onCambio;
+  final VoidCallback? onCambio;
 
-  const PantallaAjustes({super.key, required this.onCambio});
+  const PantallaAjustes({super.key, this.onCambio});
 
   @override
   State<PantallaAjustes> createState() => _PantallaAjustesState();
@@ -15,132 +14,60 @@ class PantallaAjustes extends StatefulWidget {
 
 class _PantallaAjustesState extends State<PantallaAjustes> {
   final shared_preferences _servicio = shared_preferences();
-  bool _cargando = true;
-  bool _oscuro = false; // tema oscuro (bool)
-  double _tamano = 16.0; // tamaño de letra (double)
-  bool _ocultar = false; // ocultar completados (bool)
+  int _aperturas = 0;
 
   @override
   void initState() {
     super.initState();
-    _cargar();
+    _cargarAperturas();
   }
 
-  // Lee los ajustes guardados para mostrarlos en los controles
-  Future<void> _cargar() async {
-    final oscuro = await _servicio.getTemaOscuro();
-    final tamano = await _servicio.getTamanoLetra();
-    final ocultar = await _servicio.getOcultarCompletados();
+  /// Consulta el número de aperturas desde SharedPreferences
+  Future<void> _cargarAperturas() async {
+    final num = await _servicio.getNumeroAperturas();
     if (!mounted) return;
-    setState(() {
-      _oscuro = oscuro;
-      _tamano = tamano;
-      _ocultar = ocultar;
-      _cargando = false;
-    });
+    setState(() => _aperturas = num);
   }
 
-  // Borra todos los datos y deja la app como recién instalada
-  Future<void> _borrarDatos() async {
-    // Pedimos confirmación antes de borrar
+  /// Borra todos los hábitos guardados por el usuario
+  Future<void> _limpiarHabitos() async {
     final confirmado = await mostrarConfirmacion(
       context,
-      'Borrar datos',
-      'Se borrará todo y la app quedará como recién instalada. ¿Continuar?',
+      'Borrar todos los hábitos',
+      '¿Deseas eliminar todos tus hábitos guardados? Esta acción no se puede deshacer.',
     );
-    if (!confirmado) return;
 
-    // Borra todo en SharedPreferences
-    await _servicio.borrarTodo();
-    if (!mounted) return;
-    // Volvemos a la pantalla inicial y main.dart mostrará la bienvenida
-    Navigator.popUntil(context, (route) => route.isFirst);
-    await widget.onCambio();
+    if (confirmado) {
+      await _servicio.guardarHabitos([]);
+      if (widget.onCambio != null) widget.onCambio!();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Todos los hábitos han sido eliminados')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ajustes'),
-        centerTitle: true,
-      ),
-      body: _cargando
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
+      appBar: AppBar(title: const Text('Ajustes de la Aplicación')),
+      body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Los tres ajustes van agrupados en una tarjeta
-          Card(
-            child: Column(
-              children: [
-                // Interruptor de tema oscuro
-                SwitchListTile(
-                  secondary: const Icon(Icons.dark_mode),
-                  title: const Text('Tema oscuro'),
-                  value: _oscuro,
-                  onChanged: (valor) async {
-                    setState(() {
-                      _oscuro = valor;
-                    });
-                    // Guardamos el valor y avisamos a main.dart para cambiar el tema
-                    await _servicio.setTemaOscuro(valor);
-                    await widget.onCambio();
-                  },
-                ),
-                const Divider(height: 1),
-                // Control deslizante del tamaño de letra (de 12 a 24)
-                ListTile(
-                  leading: const Icon(Icons.text_fields),
-                  title: Text('Tamaño de letra: ${_tamano.round()}'),
-                  subtitle: Slider(
-                    min: 12,
-                    max: 24,
-                    divisions: 12, // un paso por cada punto de tamaño
-                    value: _tamano,
-                    // Mientras se arrastra solo actualizamos la pantalla
-                    onChanged: (valor) {
-                      setState(() {
-                        _tamano = valor;
-                      });
-                    },
-                    // Solo guardamos al soltar el control deslizante
-                    onChangeEnd: (valor) async {
-                      await _servicio.setTamanoLetra(valor);
-                      await widget.onCambio();
-                    },
-                  ),
-                ),
-                const Divider(height: 1),
-                // Interruptor para ocultar los hábitos completados hoy
-                SwitchListTile(
-                  secondary: const Icon(Icons.visibility_off),
-                  title: const Text('Ocultar hábitos completados hoy'),
-                  value: _ocultar,
-                  onChanged: (valor) async {
-                    setState(() {
-                      _ocultar = valor;
-                    });
-                    await _servicio.setOcultarCompletados(valor);
-                    await widget.onCambio();
-                  },
-                ),
-              ],
-            ),
+          // Información de uso de la app
+          ListTile(
+            leading: const Icon(Icons.info_outline, color: Colors.deepPurple),
+            title: const Text('Veces que has abierto la app'),
+            subtitle: Text('Total de aperturas: $_aperturas'),
           ),
-          const SizedBox(height: 24),
-          // Botón rojo con icono para borrar todos los datos
-          SizedBox(
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: _borrarDatos,
-              icon: const Icon(Icons.delete_forever),
-              label: const Text('Borrar todos los datos'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error,
-                foregroundColor: Theme.of(context).colorScheme.onError,
-              ),
-            ),
+          const Divider(),
+
+          // Opción para resetear los hábitos locales
+          ListTile(
+            leading: const Icon(Icons.delete_sweep, color: Colors.red),
+            title: const Text('Borrar todos mis hábitos'),
+            subtitle: const Text('Limpia la lista de hábitos guardados localmente'),
+            onTap: _limpiarHabitos,
           ),
         ],
       ),
