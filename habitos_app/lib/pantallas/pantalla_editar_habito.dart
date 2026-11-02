@@ -11,7 +11,7 @@ class PantallaEditarHabito extends StatefulWidget {
   const PantallaEditarHabito({super.key, this.habito});
 
   @override
-  State<PantallaEditarHabito> createState() => _PantallaEditarHabitoState();
+  State<PantallaEditarHabito> createState() => PantallaEditarHabitoState();
 }
 
 class PantallaEditarHabitoState extends State<PantallaEditarHabito> {
