@@ -1,0 +1,37 @@
+import 'package:flutter/material.dart';
+
+class CampoTextoApp extends StatelessWidget {
+  final String etiqueta;
+  final TextEditingController controlador;
+  final bool ocultarTexto;
+  final IconData? icono;
+  final TextInputType? tipoTeclado;
+
+  const CampoTextoApp({
+    super.key,
+    required this.etiqueta,
+    required this.controlador,
+    this.ocultarTexto = false,
+    this.icono,
+    this.tipoTeclado,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.vertical(8.0),
+      child: TextField(
+        controller: controlador,
+        obscureText: ocultarTexto,
+        keyboardType: tipoTeclado,
+        decoration: InputDecoration(
+          labelText: etiqueta,
+          prefixIcon: icono != null ? Icon(icono) : null,
+          border: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../modelos/habito.dart';
 import '../servicios/shared_preferences.dart';
 import '../widgets/dialogo.dart';
-import 'pantalla_formulario.dart';
+import 'pantalla_editar_habito.dart';
 
 // Pantalla para crear, editar y borrar hábitos.
 class PantallaGestionHabitos extends StatefulWidget {
