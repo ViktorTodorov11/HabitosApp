@@ -1,12 +1,14 @@
 class Habito {
   String id;
   String nombre;
+  String? usuarioId;
   int color;
   List<String> fechasCompletadas;
 
   Habito({
     required this.id,
     required this.nombre,
+    this.usuarioId,
     required this.color,
     required this.fechasCompletadas,
   });
@@ -16,6 +18,7 @@ class Habito {
     return {
       'id': id,
       'nombre': nombre,
+      'usuarioId': usuarioId,
       'color': color,
       'fechasCompletadas': fechasCompletadas,
     };
@@ -26,6 +29,7 @@ class Habito {
     return Habito(
       id: json['id'] ?? '',
       nombre: json['nombre'] ?? '',
+      usuarioId: json['usuarioId'],
       color: json['color'] ?? 0xFF2196F3,
       fechasCompletadas: List<String>.from(json['fechasCompletadas'] ?? []),
     );

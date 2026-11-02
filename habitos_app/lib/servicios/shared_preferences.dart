@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../modelos/habito.dart';
+import '../modelos/usuario.dart';
 import 'claves.dart';
 
 // Servicio centralizado. Las pantallas nunca llaman directamente a SharedPreferences.
@@ -112,6 +113,107 @@ class shared_preferences {
     await prefs.setStringList(Claves.listaHabitos, listaJson);
   }
 
+  static const String _claveUsuarios = 'usuarios_registrados';
+
+  Future<List<Usuario>> getUsuarios() async {
+    final prefs = await SharedPreferences.getInstance();
+    final datos = prefs.getStringList(_claveUsuarios) ?? [];
+    return datos.map((texto) => Usuario.fromJson(jsonDecode(texto))).toList();
+  }
+
+  // guarda la lista completa de usuarios.
+  Future<void> guardarUsuarios(List<Usuario> usuarios) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      _claveUsuarios,
+      usuarios.map((u) => jsonEncode(u.toJson())).toList(),
+    );
+  }
+
+  //  crea el administrador inicial si todavía no existe.
+  Future<void> crearAdministradorInicial() async {
+    final usuarios = await getUsuarios();
+    if (usuarios.any((u) => u.email.toLowerCase() == 'admin@habitos.app')) return;
+    usuarios.add(Usuario(
+      id: 'admin',
+      nombre: 'Administrador',
+      email: 'admin@habitos.app',
+      password: 'admin123',
+      fechaCreacion: DateTime.now().toString().split(' ')[0],
+      rol: 'admin',
+    ));
+    await guardarUsuarios(usuarios);
+  }
+
+  //  registra un usuario. Devuelve false si el correo ya existe.
+  Future<bool> registrarUsuario({
+    required String nombre,
+    required String email,
+    required String password,
+  }) async {
+    await crearAdministradorInicial();
+    final usuarios = await getUsuarios();
+    if (usuarios.any((u) => u.email.toLowerCase() == email.toLowerCase())) return false;
+    usuarios.add(Usuario(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      nombre: nombre,
+      email: email,
+      password: password,
+      fechaCreacion: DateTime.now().toString().split(' ')[0],
+    ));
+    await guardarUsuarios(usuarios);
+    return true;
+  }
+
+  // comprueba email/nombre y contraseña.
+  Future<Usuario?> comprobarAcceso(String identificador, String password) async {
+    await crearAdministradorInicial();
+    final usuarios = await getUsuarios();
+    for (final usuario in usuarios) {
+      if ((usuario.email.toLowerCase() == identificador.toLowerCase() ||
+          usuario.nombre.toLowerCase() == identificador.toLowerCase()) &&
+          usuario.password == password) {
+        return usuario;
+      }
+    }
+    return null;
+  }
+
+  // elimina un usuario por su identificador (no elimina admin).
+  Future<void> eliminarUsuario(String id) async {
+    final usuarios = await getUsuarios();
+    usuarios.removeWhere((u) => u.id == id && !u.esAdministrador);
+    await guardarUsuarios(usuarios);
+  }
+
+  // devuelve solo los hábitos de un usuario.
+  Future<List<Habito>> getHabitosUsuario(String usuarioId) async {
+    final todos = await getHabitos();
+    // los hábitos antiguos sin propietario se asignan al primer usuario que entra.
+    bool hayCambios = false;
+    for (final habito in todos) {
+      if (habito.usuarioId == null) {
+        habito.usuarioId = usuarioId;
+        hayCambios = true;
+      }
+    }
+    if (hayCambios) await guardarHabitos(todos);
+    return todos.where((h) => h.usuarioId == usuarioId).toList();
+  }
+
+  // guarda hábitos de un usuario sin borrar los de los demás.
+  Future<void> guardarHabitosUsuario(String usuarioId, List<Habito> habitosUsuario) async {
+    final todos = await getHabitos();
+    todos.removeWhere((h) => h.usuarioId == usuarioId);
+    for (final habito in habitosUsuario) {
+      habito.usuarioId ??= usuarioId;
+      todos.add(habito);
+    }
+    await guardarHabitos(todos);
+  }
+
+
+
   // Borrar todas las preferencias guardadas
   Future<void> borrarTodo() async {
     final prefs = await SharedPreferences.getInstance();
@@ -119,7 +221,7 @@ class shared_preferences {
   }
 
   // --- CONTADOR DE APERTURAS ---
-  Future<int> getNumeroAperturas() async {
+  Future<int> getnumeroAperturas() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(Claves.numeroAperturas) ?? 0;
   }

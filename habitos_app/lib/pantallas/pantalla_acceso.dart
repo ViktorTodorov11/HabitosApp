@@ -5,6 +5,7 @@ import '../widgets/boton_principal.dart';
 import 'pantalla_registro.dart';
 import 'pantalla_habitos.dart';
 import 'pantalla_administracion.dart';
+import '../modelos/usuario.dart';
 
 /// Pantalla de inicio de sesión para los usuarios y el administrador
 class PantallaAcceso extends StatefulWidget {
@@ -18,12 +19,14 @@ class _PantallaAccesoState extends State<PantallaAcceso> {
   // Controladores para leer el texto de los campos de entrada
   final TextEditingController _usuarioCtrl = TextEditingController();
   final TextEditingController _passwordCtrl = TextEditingController();
+  final shared_preferences _servicio = shared_preferences();
 
   // Variable para almacenar y mostrar mensajes de error
   String _error = '';
+  bool _cargando = false;
 
   /// Método para validar las credenciales e iniciar sesión
-  void _iniciarSesion() {
+  Future<void> _iniciarSesion() async {
     final usuario = _usuarioCtrl.text.trim();
     final pass = _passwordCtrl.text.trim();
 
@@ -31,6 +34,17 @@ class _PantallaAccesoState extends State<PantallaAcceso> {
     if (usuario.isEmpty || pass.isEmpty) {
       setState(() => _error = 'Por favor, rellena todos los campos');
       return;
+    }
+
+   // Comprobacion de la contraseña
+    setState(() { _cargando = true; _error = ''; });
+    final Usuario? cuenta = await _servicio.comprobarAcceso(usuario, pass);
+    if (!mounted) return;
+    setState(() => _cargando = false);
+
+    if (cuenta == null) {
+    setState(() => _error = 'Usuario o contraseña incorrectos');
+    return;
     }
 
     // Comprobación de acceso Administrador vs Usuario Estándar
@@ -45,7 +59,10 @@ class _PantallaAccesoState extends State<PantallaAcceso> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => PantallaHabitos(nombreUsuario: usuario),
+          builder: (context) => PantallaHabitos(
+              nombreUsuario: usuario,
+              usuarioId: cuenta.id,
+          ),
         ),
       );
     }
@@ -58,8 +75,16 @@ class _PantallaAccesoState extends State<PantallaAcceso> {
 
   Future<void> _registrarApertura() async {
     final servicio = shared_preferences();
-    await servicio.getNumeroAperturas();
+    await servicio.registrarApertura();
   }
+
+  @override
+  void dispose() {
+    _usuarioCtrl.dispose();
+    _passwordCtrl.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
