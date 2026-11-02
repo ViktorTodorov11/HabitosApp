@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../servicios/shared_preferences.dart';
 import '../widgets/campo_texto_app.dart';
 import '../widgets/boton_principal.dart';
 import 'pantalla_registro.dart';
@@ -49,7 +50,16 @@ class _PantallaAccesoState extends State<PantallaAcceso> {
       );
     }
   }
+  @override
+  void initState() {
+    super.initState();
+    _registrarApertura();
+  }
 
+  Future<void> _registrarApertura() async {
+    final servicio = shared_preferences();
+    await servicio.getNumeroAperturas();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(

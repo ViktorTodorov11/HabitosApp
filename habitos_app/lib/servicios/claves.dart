@@ -3,7 +3,7 @@
 class Claves {
   static const String nombre = 'nombre_usuario';
   static const String objetivoDiario = 'objetivo_diario';
-  static const String numeroAperturas = 'numero_aperturas';
+  static const String numeroAperturas = 'contador_aperturas';
   static const String ultimaApertura = 'ultima_apertura';
   static const String temaOscuro = 'tema_oscuro';
   static const String tamanoLetra = 'tamano_letra';

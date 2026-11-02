@@ -6,6 +6,7 @@ import 'claves.dart';
 // Servicio centralizado. Las pantallas nunca llaman directamente a SharedPreferences.
 class shared_preferences {
 
+
   // 1. TIPO STRING: Nombre del usuario (Default: '')
   Future<String> getNombre() async {
     final prefs = await SharedPreferences.getInstance();
@@ -115,5 +116,17 @@ class shared_preferences {
   Future<void> borrarTodo() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+  }
+
+  // --- CONTADOR DE APERTURAS ---
+  Future<int> getNumeroAperturas() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(Claves.numeroAperturas) ?? 0;
+  }
+
+  Future<void> incrementarAperturas() async {
+    final prefs = await SharedPreferences.getInstance();
+    int actual = prefs.getInt(Claves.numeroAperturas) ?? 0;
+    await prefs.setInt(Claves.numeroAperturas, actual + 1);
   }
 }
