@@ -3,7 +3,7 @@ import '../widgets/campo_texto_app.dart';
 import '../widgets/boton_principal.dart';
 import 'pantalla_registro.dart';
 import 'pantalla_habitos.dart';
-import 'administracion_page.dart';
+import 'pantalla_administracion.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

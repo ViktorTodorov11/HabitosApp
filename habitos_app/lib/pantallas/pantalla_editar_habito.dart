@@ -5,16 +5,16 @@ import '../widgets/campo_texto_app.dart';
 import '../widgets/boton_principal.dart';
 import '../widgets/selector_color.dart';
 
-class EditarHabitoPage extends StatefulWidget {
+class PantallaEditarHabito extends StatefulWidget {
   final Habito? habito;
 
-  const EditarHabitoPage({super.key, this.habito});
+  const PantallaEditarHabito({super.key, this.habito});
 
   @override
-  State<EditarHabitoPage> createState() => _EditarHabitoPageState();
+  State<PantallaEditarHabito> createState() => _PantallaEditarHabitoState();
 }
 
-class _EditarHabitoPageState extends State<EditarHabitoPage> {
+class PantallaEditarHabitoState extends State<PantallaEditarHabito> {
   final shared_preferences _servicio = shared_preferences();
   final _nombreCtrl = TextEditingController();
   int _colorSeleccionado = 0xFF2196F3;

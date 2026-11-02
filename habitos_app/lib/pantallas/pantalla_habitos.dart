@@ -3,8 +3,8 @@ import '../modelos/habito.dart';
 import '../servicios/shared_preferences.dart';
 import '../widgets/tarjeta_habito.dart';
 import '../widgets/dialogo.dart';
-import 'editar_habito_page.dart';
-import 'estadisticas_page.dart';
+import 'pantalla_editar_habito.dart';
+import 'pantalla_estadisticas.dart';
 import 'pantalla_acceso.dart';
 
 class HabitosPage extends StatefulWidget {
@@ -76,7 +76,7 @@ class _HabitosPageState extends State<HabitosPage> {
         onPressed: () async {
           await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const EditarHabitoPage()),
+            MaterialPageRoute(builder: (context) => const PantallaEditarHabito()),
           );
           _cargarHabitos();
         },
@@ -106,7 +106,7 @@ class _HabitosPageState extends State<HabitosPage> {
             onEdit: () async {
               await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => EditarHabitoPage(habito: h)),
+                MaterialPageRoute(builder: (context) => PantallaEditarHabito(habito: h)),
               );
               _cargarHabitos();
             },

@@ -38,7 +38,7 @@ class _PantallaGestionHabitosState extends State<PantallaGestionHabitos> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PantallaFormulario(habito: habito),
+        builder: (context) => PantallaEditarHabito(habito: habito),
       ),
     );
     // Al volver, releemos la lista para ver los cambios
