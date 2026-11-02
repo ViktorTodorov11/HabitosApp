@@ -11,8 +11,10 @@ import 'pantalla_acceso.dart';
 /// Pantalla principal que muestra el listado de hábitos del usuario
 class PantallaHabitos extends StatefulWidget {
   final String nombreUsuario;
+  // id para separar los hábitos de cada cuenta.
+  final String usuarioId;
 
-  const PantallaHabitos({super.key, required this.nombreUsuario});
+  const PantallaHabitos({super.key, required this.nombreUsuario, this.usuarioId = ''});
 
   @override
   State<PantallaHabitos> createState() => _PantallaHabitosState();
@@ -32,7 +34,8 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
 
   /// Carga la lista de hábitos desde SharedPreferences
   Future<void> _cargarHabitos() async {
-    final habitos = await _servicio.getHabitos();
+    // se cargan solo los hábitos del usuario conectado.
+    final habitos = widget.usuarioId.isEmpty ? await _servicio.getHabitos() : await _servicio.getHabitosUsuario(widget.usuarioId);
     if (!mounted) return;
     setState(() {
       _habitos = habitos;
@@ -50,7 +53,8 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
 
     if (confirmado) {
       _habitos.remove(habito);
-      await _servicio.guardarHabitos(_habitos);
+      // guarda sin modificar los hábitos de otras cuentas.
+      if (widget.usuarioId.isEmpty) { await _servicio.guardarHabitos(_habitos); } else { await _servicio.guardarHabitosUsuario(widget.usuarioId, _habitos); }
       _cargarHabitos();
     }
   }
@@ -67,7 +71,7 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
             tooltip: 'Estadísticas',
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const EstadisticasPage()),
+              MaterialPageRoute(builder: (context) => EstadisticasPage(usuarioId: widget.usuarioId)),
             ),
           ),
           // Botón para acceder a la configuración / ajustes
@@ -79,6 +83,7 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => PantallaAjustes(
+                    usuarioId: widget.usuarioId,
                     onCambio: () async {
                       await _cargarHabitos();
                     },
@@ -106,7 +111,7 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
           await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const PantallaEditarHabito(),
+              builder: (context) => PantallaEditarHabito(usuarioId: widget.usuarioId),
             ),
           );
           _cargarHabitos();
@@ -134,7 +139,8 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
               } else {
                 habito.fechasCompletadas.remove(hoy);
               }
-              await _servicio.guardarHabitos(_habitos);
+              // guarda sin modificar los hábitos de otras cuentas.
+      if (widget.usuarioId.isEmpty) { await _servicio.guardarHabitos(_habitos); } else { await _servicio.guardarHabitosUsuario(widget.usuarioId, _habitos); }
               setState(() {});
             },
             // Abrir formulario para editar el hábito
@@ -142,7 +148,7 @@ class _PantallaHabitosState extends State<PantallaHabitos> {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => PantallaEditarHabito(habito: habito),
+                  builder: (context) => PantallaEditarHabito(habito: habito, usuarioId: widget.usuarioId),
                 ),
               );
               _cargarHabitos();

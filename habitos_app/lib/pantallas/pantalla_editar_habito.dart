@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-// Modelos y persistencia
 import '../modelos/habito.dart';
 import '../servicios/shared_preferences.dart';
-// Widgets reutilizables
 import '../widgets/campo_texto_app.dart';
 import '../widgets/boton_principal.dart';
 import '../widgets/selector_color.dart';
@@ -10,8 +8,10 @@ import '../widgets/selector_color.dart';
 /// Formulario para crear un hábito nuevo o editar uno existente
 class PantallaEditarHabito extends StatefulWidget {
   final Habito? habito;
+  // propietario del hábito nuevo.
+  final String usuarioId;
 
-  const PantallaEditarHabito({super.key, this.habito});
+  const PantallaEditarHabito({super.key, this.habito, this.usuarioId = ''});
 
   @override
   State<PantallaEditarHabito> createState() => _PantallaEditarHabitoState();
@@ -46,6 +46,7 @@ class _PantallaEditarHabitoState extends State<PantallaEditarHabito> {
         nombre: nombre,
         color: _colorSeleccionado,
         fechasCompletadas: [],
+        usuarioId: widget.usuarioId.isEmpty ? null : widget.usuarioId,
       ));
     } else {
       // Edición de hábito existente
@@ -88,6 +89,11 @@ class _PantallaEditarHabitoState extends State<PantallaEditarHabito> {
             BotonPrincipal(
               texto: 'Guardar Hábito',
               onPressed: _guardar,
+            ),
+            // cancelar vuelve sin guardar los cambios.
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
             ),
           ],
         ),

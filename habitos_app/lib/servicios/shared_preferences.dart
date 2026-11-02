@@ -113,8 +113,11 @@ class shared_preferences {
     await prefs.setStringList(Claves.listaHabitos, listaJson);
   }
 
+
+  // clave de usuarios y cuenta de administrador de prueba.
   static const String _claveUsuarios = 'usuarios_registrados';
 
+  // obtiene todos los usuarios registrados.
   Future<List<Usuario>> getUsuarios() async {
     final prefs = await SharedPreferences.getInstance();
     final datos = prefs.getStringList(_claveUsuarios) ?? [];
@@ -130,7 +133,7 @@ class shared_preferences {
     );
   }
 
-  //  crea el administrador inicial si todavía no existe.
+  // crea el administrador inicial si todavía no existe.
   Future<void> crearAdministradorInicial() async {
     final usuarios = await getUsuarios();
     if (usuarios.any((u) => u.email.toLowerCase() == 'admin@habitos.app')) return;
@@ -145,7 +148,7 @@ class shared_preferences {
     await guardarUsuarios(usuarios);
   }
 
-  //  registra un usuario. Devuelve false si el correo ya existe.
+  // registra un usuario. Devuelve false si el correo ya existe.
   Future<bool> registrarUsuario({
     required String nombre,
     required String email,
@@ -171,7 +174,7 @@ class shared_preferences {
     final usuarios = await getUsuarios();
     for (final usuario in usuarios) {
       if ((usuario.email.toLowerCase() == identificador.toLowerCase() ||
-          usuario.nombre.toLowerCase() == identificador.toLowerCase()) &&
+              usuario.nombre.toLowerCase() == identificador.toLowerCase()) &&
           usuario.password == password) {
         return usuario;
       }
@@ -211,8 +214,6 @@ class shared_preferences {
     }
     await guardarHabitos(todos);
   }
-
-
 
   // Borrar todas las preferencias guardadas
   Future<void> borrarTodo() async {

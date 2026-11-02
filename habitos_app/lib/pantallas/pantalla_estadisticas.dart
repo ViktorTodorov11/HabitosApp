@@ -4,7 +4,9 @@ import '../servicios/shared_preferences.dart';
 import '../widgets/dato_estadistica.dart';
 
 class EstadisticasPage extends StatefulWidget {
-  const EstadisticasPage({super.key});
+  // permite mostrar las estadísticas del usuario conectado.
+  final String usuarioId;
+  const EstadisticasPage({super.key, this.usuarioId = ''});
 
   @override
   State<EstadisticasPage> createState() => _EstadisticasPageState();
@@ -21,7 +23,9 @@ class _EstadisticasPageState extends State<EstadisticasPage> {
   }
 
   Future<void> _cargar() async {
-    final habitos = await _servicio.getHabitos();
+    // filtra por propietario cuando se conoce el usuario.
+    final habitos = widget.usuarioId.isEmpty ? await _servicio.getHabitos() : await _servicio.getHabitosUsuario(widget.usuarioId);
+    if (!mounted) return;
     setState(() => _habitos = habitos);
   }
 
@@ -29,7 +33,9 @@ class _EstadisticasPageState extends State<EstadisticasPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Estadísticas')),
-      body: ListView(
+      body: _habitos.isEmpty
+          ? const Center(child: Text('Todavía no hay hábitos para mostrar'))
+          : ListView(
         padding: const EdgeInsets.all(16),
         children: _habitos.map((h) {
           return Column(

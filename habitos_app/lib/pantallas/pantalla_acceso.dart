@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import '../servicios/shared_preferences.dart';
+import '../modelos/usuario.dart';
 import '../widgets/campo_texto_app.dart';
 import '../widgets/boton_principal.dart';
 import 'pantalla_registro.dart';
 import 'pantalla_habitos.dart';
 import 'pantalla_administracion.dart';
-import '../modelos/usuario.dart';
 
-/// Pantalla de inicio de sesión para los usuarios y el administrador
+// Pantalla de inicio de sesión para los usuarios y el administrador
 class PantallaAcceso extends StatefulWidget {
   const PantallaAcceso({super.key});
 
@@ -27,18 +27,17 @@ class _PantallaAccesoState extends State<PantallaAcceso> {
 
   /// Método para validar las credenciales e iniciar sesión
   Future<void> _iniciarSesion() async {
-    final textoIngresado = _usuarioCtrl.text.trim();
+    final usuario = _usuarioCtrl.text.trim();
     final pass = _passwordCtrl.text.trim();
 
     // Validación de campos vacíos
-    if (textoIngresado.isEmpty || pass.isEmpty) {
+    if (usuario.isEmpty || pass.isEmpty) {
       setState(() => _error = 'Por favor, rellena todos los campos');
       return;
     }
 
-    // Comprobación de las credenciales a través del servicio
     setState(() { _cargando = true; _error = ''; });
-    final Usuario? cuenta = await _servicio.comprobarAcceso(textoIngresado, pass);
+    final Usuario? cuenta = await _servicio.comprobarAcceso(usuario, pass);
     if (!mounted) return;
     setState(() => _cargando = false);
 
@@ -47,8 +46,8 @@ class _PantallaAccesoState extends State<PantallaAcceso> {
       return;
     }
 
-    // Comprobación de acceso Administrador vs Usuario Estándar usando el objeto devuelto
-    if (cuenta.nombre.toLowerCase() == 'admin') {
+    // Comprobación de acceso Administrador vs Usuario Estándar
+    if (cuenta.esAdministrador) {
       // Redirige al panel de administración
       Navigator.pushReplacement(
         context,
@@ -58,12 +57,10 @@ class _PantallaAccesoState extends State<PantallaAcceso> {
       // Redirige a la pantalla principal de hábitos del usuario
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (context) => PantallaHabitos(
-            nombreUsuario: cuenta.nombre,
-            usuarioId: cuenta.id,
-          ),
-        ),
+        MaterialPageRoute(builder: (context) => PantallaHabitos(
+          nombreUsuario: cuenta.nombre,
+          usuarioId: cuenta.id,
+        )),
       );
     }
   }
@@ -77,7 +74,7 @@ class _PantallaAccesoState extends State<PantallaAcceso> {
   Future<void> _registrarApertura() async {
     final servicio = shared_preferences();
     await servicio.registrarApertura();
-  }
+
 
   @override
   void dispose() {
@@ -99,14 +96,12 @@ class _PantallaAccesoState extends State<PantallaAcceso> {
           children: [
             const Icon(Icons.lock_outline, size: 80, color: Colors.deepPurple),
             const SizedBox(height: 20),
-
             // Campo de entrada de usuario o email
             CampoTextoApp(
               etiqueta: 'Usuario o Email',
               controlador: _usuarioCtrl,
               icono: Icons.person,
             ),
-
             // Campo de entrada de contraseña
             CampoTextoApp(
               etiqueta: 'Contraseña',
@@ -114,21 +109,17 @@ class _PantallaAccesoState extends State<PantallaAcceso> {
               ocultarTexto: true,
               icono: Icons.lock,
             ),
-
             // Muestra mensaje de error si existe
             if (_error.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(_error, style: const TextStyle(color: Colors.red)),
             ],
-
             const SizedBox(height: 20),
-
             // Botón principal de login
             BotonPrincipal(
-              texto: 'Iniciar Sesión',
-              onPressed: _iniciarSesion,
+              texto: _cargando ? 'Comprobando...' : 'Iniciar Sesión',
+              onPressed: _cargando ? () {} : _iniciarSesion,
             ),
-
             // Enlace para ir a la pantalla de registro
             TextButton(
               onPressed: () {
@@ -144,4 +135,5 @@ class _PantallaAccesoState extends State<PantallaAcceso> {
       ),
     );
   }
+}
 }

@@ -5,8 +5,10 @@ import '../widgets/dialogo.dart';
 /// Pantalla de configuración y ajustes de la aplicación para el usuario
 class PantallaAjustes extends StatefulWidget {
   final VoidCallback? onCambio;
+  // id para que los ajustes solo afecten a la cuenta conectada.
+  final String usuarioId;
 
-  const PantallaAjustes({super.key, this.onCambio});
+  const PantallaAjustes({super.key, this.onCambio, this.usuarioId = ''});
 
   @override
   State<PantallaAjustes> createState() => _PantallaAjustesState();
@@ -38,7 +40,12 @@ class _PantallaAjustesState extends State<PantallaAjustes> {
     );
 
     if (confirmado) {
-      await _servicio.guardarHabitos([]);
+      //borrar solo los hábitos del usuario actual.
+      if (widget.usuarioId.isEmpty) {
+        await _servicio.guardarHabitos([]);
+      } else {
+        await _servicio.guardarHabitosUsuario(widget.usuarioId, []);
+      }
       if (widget.onCambio != null) widget.onCambio!();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

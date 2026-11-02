@@ -16,8 +16,9 @@ class _RegistroPageState extends State<RegistroPage> {
   final _passCtrl = TextEditingController();
   final shared_preferences _servicio = shared_preferences();
   String _mensaje = '';
-  bool _cargando false;
+  bool _cargando = false;
 
+  // ahora guarda el usuario en SharedPreferences.
   Future<void> _registrar() async {
     final nombre = _nombreCtrl.text.trim();
     final email = _emailCtrl.text.trim();

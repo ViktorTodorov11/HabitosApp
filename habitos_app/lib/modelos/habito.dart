@@ -1,16 +1,17 @@
 class Habito {
   String id;
   String nombre;
-  String? usuarioId;
   int color;
   List<String> fechasCompletadas;
+  // identifica al propietario del hábito.
+  String? usuarioId;
 
   Habito({
     required this.id,
     required this.nombre,
-    this.usuarioId,
     required this.color,
     required this.fechasCompletadas,
+    this.usuarioId,
   });
 
   // Convertir a Map para guardar en JSON
@@ -18,9 +19,9 @@ class Habito {
     return {
       'id': id,
       'nombre': nombre,
-      'usuarioId': usuarioId,
       'color': color,
       'fechasCompletadas': fechasCompletadas,
+      'usuarioId': usuarioId,
     };
   }
 
@@ -29,9 +30,9 @@ class Habito {
     return Habito(
       id: json['id'] ?? '',
       nombre: json['nombre'] ?? '',
-      usuarioId: json['usuarioId'],
       color: json['color'] ?? 0xFF2196F3,
       fechasCompletadas: List<String>.from(json['fechasCompletadas'] ?? []),
+      usuarioId: json['usuarioId'],
     );
   }
 

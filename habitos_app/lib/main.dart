@@ -22,10 +22,13 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _cargarTema();
+    // crea la cuenta admin inicial si no existe.
+    _servicio.crearAdministradorInicial();
   }
 
   Future<void> _cargarTema() async {
     final modoOscuro = await _servicio.getTemaOscuro();
+    if (!mounted) return;
     setState(() {
       _modoOscuro = modoOscuro;
     });

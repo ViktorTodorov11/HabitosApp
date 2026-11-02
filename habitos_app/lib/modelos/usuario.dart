@@ -4,7 +4,7 @@ class Usuario {
   final String email;
   final String password;
   final String fechaCreacion;
-  final String rol;
+  final String rol; // 'usuario' o 'admin'
 
   const Usuario({
     required this.id,
@@ -18,20 +18,20 @@ class Usuario {
   bool get esAdministrador => rol == 'admin';
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'nombre': nombre,
-    'email': email,
-    'password': password,
-    'fechaCreacion': fechaCreacion,
-    'rol': rol,
-  };
+        'id': id,
+        'nombre': nombre,
+        'email': email,
+        'password': password,
+        'fechaCreacion': fechaCreacion,
+        'rol': rol,
+      };
 
   factory Usuario.fromJson(Map<String, dynamic> json) => Usuario(
-    id: json['id'] ?? '',
-    nombre: json['nombre'] ?? '',
-    email: json['email'] ?? '',
-    password: json['password'] ?? '',
-    fechaCreacion: json['fechaCreacion'] ?? '',
-    rol: json['rol'] ?? 'usuario',
-  );
+        id: json['id'] ?? '',
+        nombre: json['nombre'] ?? '',
+        email: json['email'] ?? '',
+        password: json['password'] ?? '',
+        fechaCreacion: json['fechaCreacion'] ?? '',
+        rol: json['rol'] ?? 'usuario',
+      );
 }

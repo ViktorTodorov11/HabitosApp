@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../modelos/habito.dart';
+import '../modelos/usuario.dart';
 import '../servicios/shared_preferences.dart';
 import '../widgets/dialogo.dart';
 import 'pantalla_acceso.dart';
@@ -15,6 +16,7 @@ class PantallaAdministracion extends StatefulWidget {
 class _PantallaAdministracionState extends State<PantallaAdministracion> {
   final shared_preferences _servicio = shared_preferences();
   List<Habito> _todosLosHabitos = [];
+  List<Usuario> _usuarios = [];
   int _totalAperturas = 0;
   bool _cargando = true;
 
@@ -28,10 +30,12 @@ class _PantallaAdministracionState extends State<PantallaAdministracion> {
   Future<void> _cargarDatosGlobales() async {
     final habitos = await _servicio.getHabitos();
     final aperturas = await _servicio.getNumeroAperturas();
+    final usuarios = await _servicio.getUsuarios();
     if (!mounted) return;
     setState(() {
       _todosLosHabitos = habitos;
       _totalAperturas = aperturas;
+      _usuarios = usuarios;
       _cargando = false;
     });
   }
@@ -47,12 +51,26 @@ class _PantallaAdministracionState extends State<PantallaAdministracion> {
     if (confirmado) {
       _todosLosHabitos.remove(habito);
       await _servicio.guardarHabitos(_todosLosHabitos);
-      _cargarDatosGlobales();
+      await _cargarDatosGlobales();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Hábito "${habito.nombre}" eliminado por el Administrador')),
       );
     }
+  }
+
+  Future<void> _eliminarUsuario(Usuario usuario) async {
+    final confirmado = await mostrarConfirmacion(
+      context,
+      'Eliminar usuario',
+      '¿Quieres eliminar la cuenta de ${usuario.nombre}?',
+    );
+    if (!confirmado) return;
+    await _servicio.eliminarUsuario(usuario.id);
+    final habitos = await _servicio.getHabitos();
+    habitos.removeWhere((h) => h.usuarioId == usuario.id);
+    await _servicio.guardarHabitos(habitos);
+    await _cargarDatosGlobales();
   }
 
   /// Restablece completamente los datos guardados en el dispositivo
@@ -104,25 +122,37 @@ class _PantallaAdministracionState extends State<PantallaAdministracion> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Métricas del Sistema',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+                  const Text('Métricas del Sistema', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text('Total de hábitos en el sistema: ${_todosLosHabitos.length}'),
                   Text('Aperturas totales de la aplicación: $_totalAperturas'),
+                  Text('Usuarios registrados: ${_usuarios.where((u) => !u.esAdministrador).length}'),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 20),
-
-          const Text(
-            'Gestión Global de Hábitos',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
+          const Text('Gestión de usuarios', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-
+          if (_usuarios.isEmpty)
+            const Text('No hay usuarios registrados.')
+          else
+            ..._usuarios.map((usuario) => Card(
+              child: ListTile(
+                leading: Icon(usuario.esAdministrador ? Icons.admin_panel_settings : Icons.person),
+                title: Text(usuario.nombre),
+                subtitle: Text('${usuario.email} · ${usuario.rol}'),
+                trailing: usuario.esAdministrador
+                    ? const Text('Admin')
+                    : IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _eliminarUsuario(usuario),
+                      ),
+              ),
+            )),
+          const SizedBox(height: 20),
+          const Text('Gestión Global de Hábitos', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
           // Lista de todos los hábitos creados
           if (_todosLosHabitos.isEmpty)
             const Padding(
@@ -130,35 +160,24 @@ class _PantallaAdministracionState extends State<PantallaAdministracion> {
               child: Text('No hay hábitos registrados en el sistema.'),
             )
           else
-            ..._todosLosHabitos.map(
-                  (habito) => Card(
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Color(habito.color),
-                    child: const Icon(Icons.article, color: Colors.white),
-                  ),
-                  title: Text(habito.nombre),
-                  subtitle: Text('Días completados: ${habito.fechasCompletadas.length}'),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_forever, color: Colors.red),
-                    onPressed: () => _eliminarCualquierHabito(habito),
-                  ),
+            ..._todosLosHabitos.map((habito) => Card(
+              child: ListTile(
+                leading: CircleAvatar(backgroundColor: Color(habito.color), child: const Icon(Icons.article, color: Colors.white)),
+                title: Text(habito.nombre),
+                subtitle: Text('Días completados: ${habito.fechasCompletadas.length}'),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete_forever, color: Colors.red),
+                  onPressed: () => _eliminarCualquierHabito(habito),
                 ),
               ),
-            ),
-
+            )),
           const SizedBox(height: 30),
-
           // Botón de restablecimiento general para el Administrador
           ElevatedButton.icon(
             onPressed: _restablecerSistema,
             icon: const Icon(Icons.warning, color: Colors.white),
             label: const Text('Restablecer todos los datos del sistema'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 12)),
           ),
         ],
       ),
