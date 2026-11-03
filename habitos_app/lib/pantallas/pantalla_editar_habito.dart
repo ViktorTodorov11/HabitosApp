@@ -37,7 +37,9 @@ class _PantallaEditarHabitoState extends State<PantallaEditarHabito> {
     final nombre = _nombreCtrl.text.trim();
     if (nombre.isEmpty) return;
 
-    final habitos = await _servicio.getHabitos();
+    final habitos = widget.usuarioId.isEmpty
+        ? await _servicio.getHabitos()
+        : await _servicio.getHabitosUsuario(widget.usuarioId);
 
     if (widget.habito == null) {
       // Creación de nuevo hábito
@@ -55,7 +57,11 @@ class _PantallaEditarHabitoState extends State<PantallaEditarHabito> {
       item.color = _colorSeleccionado;
     }
 
-    await _servicio.guardarHabitos(habitos);
+    if (widget.usuarioId.isEmpty) {
+      await _servicio.guardarHabitos(habitos);
+    } else {
+      await _servicio.guardarHabitosUsuario(widget.usuarioId, habitos);
+    }
     if (!mounted) return;
     Navigator.pop(context);
   }

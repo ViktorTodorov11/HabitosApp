@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'servicios/shared_preferences.dart';
 import 'pantallas/pantalla_acceso.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await shared_preferences().crearAdministradorInicial();
   runApp(const MyApp());
 }
 
@@ -22,8 +23,6 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _cargarTema();
-    // crea la cuenta admin inicial si no existe.
-    _servicio.crearAdministradorInicial();
   }
 
   Future<void> _cargarTema() async {

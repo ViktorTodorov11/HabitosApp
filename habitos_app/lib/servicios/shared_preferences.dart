@@ -1,235 +1,246 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:shared_preferences/shared_preferences.dart' as preferencias;
 import '../modelos/habito.dart';
 import '../modelos/usuario.dart';
 import 'claves.dart';
 
-// Servicio centralizado. Las pantallas nunca llaman directamente a SharedPreferences.
+// Ajustes sencillos en SharedPreferences y datos principales en SQLite.
 class shared_preferences {
+  static Database? _database;
+  static const String _claveUsuariosAntiguos = 'usuarios_registrados';
 
-
-  // 1. TIPO STRING: Nombre del usuario (Default: '')
-  Future<String> getNombre() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(Claves.nombre) ?? '';
-  }
-
-  Future<void> setNombre(String nombre) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(Claves.nombre, nombre);
-  }
-
-  // 2. TIPO INT: Objetivo diario de hábitos (Default: 3)
-  Future<int> getObjetivoDiario() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(Claves.objetivoDiario) ?? 3;
-  }
-
-  Future<void> setObjetivoDiario(int objetivo) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(Claves.objetivoDiario, objetivo);
-  }
-
-  // TIPO INT: Número de aperturas de la app (Default: 0)
-  Future<int> getNumeroAperturas() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(Claves.numeroAperturas) ?? 0;
-  }
-
-  // TIPO STRING: Fecha de última apertura (Default: 'Nunca')
-  Future<String> getUltimaApertura() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(Claves.ultimaApertura) ?? 'Nunca';
-  }
-
-  // Registra la apertura incrementando contador y guardando fecha/hora actual
-  Future<void> registrarApertura() async {
-    final prefs = await SharedPreferences.getInstance();
-    int aperturas = (prefs.getInt(Claves.numeroAperturas) ?? 0) + 1;
-    await prefs.setInt(Claves.numeroAperturas, aperturas);
-
-    DateTime ahora = DateTime.now();
-    String fechaFormateada = ahora.toString().split('.')[0]; // YYYY-MM-DD HH:MM:SS
-    await prefs.setString(Claves.ultimaApertura, fechaFormateada);
-  }
-
-  // 3. TIPO BOOL: Tema oscuro, ocultar completados y estado de bienvenida (Default: false)
-  Future<bool> getTemaOscuro() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(Claves.temaOscuro) ?? false;
-  }
-
-  Future<void> setTemaOscuro(bool valor) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(Claves.temaOscuro, valor);
-  }
-
-  Future<bool> getOcultarCompletados() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(Claves.ocultarCompletados) ?? false;
-  }
-
-  Future<void> setOcultarCompletados(bool valor) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(Claves.ocultarCompletados, valor);
-  }
-
-  Future<bool> getBienvenidaCompletada() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(Claves.bienvenidaCompletada) ?? false;
-  }
-
-  Future<void> setBienvenidaCompletada(bool valor) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(Claves.bienvenidaCompletada, valor);
-  }
-
-  // 4. TIPO DOUBLE: Tamaño de letra (Default: 16.0)
-  Future<double> getTamanoLetra() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getDouble(Claves.tamanoLetra) ?? 16.0;
-  }
-
-  Future<void> setTamanoLetra(double tamano) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble(Claves.tamanoLetra, tamano);
-  }
-
-  // 5. TIPO LIST<STRING>: Serialización y deserialización JSON de objetos Habito
-  Future<List<Habito>> getHabitos() async {
-    final prefs = await SharedPreferences.getInstance();
-    List<String>? listaJson = prefs.getStringList(Claves.listaHabitos);
-    if (listaJson == null) return [];
-
-    return listaJson.map((texto) {
-      Map<String, dynamic> mapa = jsonDecode(texto);
-      return Habito.fromJson(mapa);
-    }).toList();
-  }
-
-  Future<void> guardarHabitos(List<Habito> habitos) async {
-    final prefs = await SharedPreferences.getInstance();
-    List<String> listaJson = habitos.map((h) => jsonEncode(h.toJson())).toList();
-    await prefs.setStringList(Claves.listaHabitos, listaJson);
-  }
-
-
-  // clave de usuarios y cuenta de administrador de prueba.
-  static const String _claveUsuarios = 'usuarios_registrados';
-
-  // obtiene todos los usuarios registrados.
-  Future<List<Usuario>> getUsuarios() async {
-    final prefs = await SharedPreferences.getInstance();
-    final datos = prefs.getStringList(_claveUsuarios) ?? [];
-    return datos.map((texto) => Usuario.fromJson(jsonDecode(texto))).toList();
-  }
-
-  // guarda la lista completa de usuarios.
-  Future<void> guardarUsuarios(List<Usuario> usuarios) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(
-      _claveUsuarios,
-      usuarios.map((u) => jsonEncode(u.toJson())).toList(),
+  Future<Database> get database async {
+    if (_database != null) return _database!;
+    final ruta = join(await getDatabasesPath(), 'habitos_app.db');
+    _database = await openDatabase(
+      ruta,
+      version: 1,
+      onConfigure: (db) async => db.execute('PRAGMA foreign_keys = ON'),
+      onCreate: (db, version) async {
+        await db.execute('''CREATE TABLE usuarios (
+          id TEXT PRIMARY KEY,
+          nombre TEXT NOT NULL,
+          email TEXT NOT NULL UNIQUE,
+          password TEXT NOT NULL,
+          fecha_creacion TEXT NOT NULL,
+          rol TEXT NOT NULL DEFAULT 'usuario'
+        )''');
+        await db.execute('''CREATE TABLE habitos (
+          id TEXT PRIMARY KEY,
+          nombre TEXT NOT NULL,
+          color INTEGER NOT NULL,
+          fechas_completadas TEXT NOT NULL,
+          usuario_id TEXT NOT NULL,
+          FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+        )''');
+        await db.execute('''CREATE TABLE estadisticas (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          habito_id TEXT NOT NULL UNIQUE,
+          usuario_id TEXT NOT NULL,
+          racha_actual INTEGER NOT NULL DEFAULT 0,
+          total_dias_completados INTEGER NOT NULL DEFAULT 0,
+          FOREIGN KEY (habito_id) REFERENCES habitos(id) ON DELETE CASCADE,
+          FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+        )''');
+      },
     );
+    await _migrarDatosAntiguos(_database!);
+    return _database!;
   }
 
-  // crea el administrador inicial si todavía no existe.
+  // Conserva los usuarios y hábitos que ya estaban guardados en SharedPreferences.
+  Future<void> _migrarDatosAntiguos(Database db) async {
+    final prefs = await preferencias.SharedPreferences.getInstance();
+    final cantidad = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM usuarios')) ?? 0;
+    if (cantidad > 0) return;
+
+    final usuariosJson = prefs.getStringList(_claveUsuariosAntiguos) ?? [];
+    final antiguos = usuariosJson
+        .map((texto) => Usuario.fromJson(jsonDecode(texto)))
+        .toList();
+    if (antiguos.isEmpty) {
+      antiguos.add(Usuario(
+        id: 'admin', nombre: 'Admin', email: 'admin@habitos.app',
+        password: 'admin123', fechaCreacion: DateTime.now().toString().split(' ')[0], rol: 'admin',
+      ));
+    }
+    await db.transaction((txn) async {
+      for (final usuario in antiguos) {
+        await txn.insert('usuarios', _usuarioMap(usuario), conflictAlgorithm: ConflictAlgorithm.ignore);
+      }
+      final habitosJson = prefs.getStringList(Claves.listaHabitos) ?? [];
+      for (final texto in habitosJson) {
+        final habito = Habito.fromJson(jsonDecode(texto));
+        String? propietario = habito.usuarioId;
+        if (propietario == null || propietario.isEmpty) {
+          propietario = antiguos.firstWhere((u) => !u.esAdministrador, orElse: () => antiguos.first).id;
+        }
+        final existe = await txn.query('usuarios', where: 'id = ?', whereArgs: [propietario]);
+        if (existe.isEmpty) continue;
+        habito.usuarioId = propietario;
+        await txn.insert('habitos', _habitoMap(habito), conflictAlgorithm: ConflictAlgorithm.replace);
+        await _guardarEstadistica(txn, habito);
+      }
+    });
+  }
+
+  Map<String, Object?> _usuarioMap(Usuario u) => {
+    'id': u.id, 'nombre': u.nombre, 'email': u.email,
+    'password': u.password, 'fecha_creacion': u.fechaCreacion, 'rol': u.rol,
+  };
+
+  Usuario _usuarioDesdeFila(Map<String, Object?> fila) => Usuario(
+    id: fila['id'] as String,
+    nombre: fila['nombre'] as String,
+    email: fila['email'] as String,
+    password: fila['password'] as String,
+    fechaCreacion: fila['fecha_creacion'] as String,
+    rol: fila['rol'] as String,
+  );
+
+  Map<String, Object?> _habitoMap(Habito h) => {
+    'id': h.id, 'nombre': h.nombre, 'color': h.color,
+    'fechas_completadas': jsonEncode(h.fechasCompletadas),
+    'usuario_id': h.usuarioId ?? '',
+  };
+
+  Habito _habitoDesdeFila(Map<String, Object?> fila) => Habito(
+    id: fila['id'] as String,
+    nombre: fila['nombre'] as String,
+    color: fila['color'] as int,
+    fechasCompletadas: List<String>.from(jsonDecode(fila['fechas_completadas'] as String)),
+    usuarioId: fila['usuario_id'] as String,
+  );
+
+  Future<void> _guardarEstadistica(Transaction txn, Habito habito) async {
+    await txn.insert('estadisticas', {
+      'habito_id': habito.id,
+      'usuario_id': habito.usuarioId ?? '',
+      'racha_actual': habito.calcularRacha(),
+      'total_dias_completados': habito.fechasCompletadas.length,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  // Nombre y preferencias de la aplicación: siguen en SharedPreferences.
+  Future<String> getNombre() async { final p = await preferencias.SharedPreferences.getInstance(); return p.getString(Claves.nombre) ?? ''; }
+  Future<void> setNombre(String v) async { final p = await preferencias.SharedPreferences.getInstance(); await p.setString(Claves.nombre, v); }
+  Future<int> getObjetivoDiario() async { final p = await preferencias.SharedPreferences.getInstance(); return p.getInt(Claves.objetivoDiario) ?? 3; }
+  Future<void> setObjetivoDiario(int v) async { final p = await preferencias.SharedPreferences.getInstance(); await p.setInt(Claves.objetivoDiario, v); }
+  Future<int> getNumeroAperturas() async { final p = await preferencias.SharedPreferences.getInstance(); return p.getInt(Claves.numeroAperturas) ?? 0; }
+  Future<String> getUltimaApertura() async { final p = await preferencias.SharedPreferences.getInstance(); return p.getString(Claves.ultimaApertura) ?? 'Nunca'; }
+  Future<void> registrarApertura() async {
+    final p = await preferencias.SharedPreferences.getInstance();
+    await p.setInt(Claves.numeroAperturas, (p.getInt(Claves.numeroAperturas) ?? 0) + 1);
+    await p.setString(Claves.ultimaApertura, DateTime.now().toString().split('.')[0]);
+  }
+  Future<bool> getTemaOscuro() async { final p = await preferencias.SharedPreferences.getInstance(); return p.getBool(Claves.temaOscuro) ?? false; }
+  Future<void> setTemaOscuro(bool v) async { final p = await preferencias.SharedPreferences.getInstance(); await p.setBool(Claves.temaOscuro, v); }
+  Future<bool> getOcultarCompletados() async { final p = await preferencias.SharedPreferences.getInstance(); return p.getBool(Claves.ocultarCompletados) ?? false; }
+  Future<void> setOcultarCompletados(bool v) async { final p = await preferencias.SharedPreferences.getInstance(); await p.setBool(Claves.ocultarCompletados, v); }
+  Future<bool> getBienvenidaCompletada() async { final p = await preferencias.SharedPreferences.getInstance(); return p.getBool(Claves.bienvenidaCompletada) ?? false; }
+  Future<void> setBienvenidaCompletada(bool v) async { final p = await preferencias.SharedPreferences.getInstance(); await p.setBool(Claves.bienvenidaCompletada, v); }
+  Future<double> getTamanoLetra() async { final p = await preferencias.SharedPreferences.getInstance(); return p.getDouble(Claves.tamanoLetra) ?? 16.0; }
+  Future<void> setTamanoLetra(double v) async { final p = await preferencias.SharedPreferences.getInstance(); await p.setDouble(Claves.tamanoLetra, v); }
+
+  // CRUD de usuarios.
+  Future<List<Usuario>> getUsuarios() async {
+    final db = await database;
+    final filas = await db.query('usuarios', orderBy: 'nombre');
+    return filas.map(_usuarioDesdeFila).toList();
+  }
+  Future<void> guardarUsuarios(List<Usuario> usuarios) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      for (final u in usuarios) {
+        await txn.insert('usuarios', _usuarioMap(u), conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+  }
   Future<void> crearAdministradorInicial() async {
-    final usuarios = await getUsuarios();
-    if (usuarios.any((u) => u.email.toLowerCase() == 'admin@habitos.app')) return;
-    usuarios.add(Usuario(
-      id: 'admin',
-      nombre: 'Admin',
-      email: 'admin@habitos.app',
-      password: 'admin123',
-      fechaCreacion: DateTime.now().toString().split(' ')[0],
-      rol: 'admin',
-    ));
-    await guardarUsuarios(usuarios);
+    final db = await database;
+    final existe = await db.query('usuarios', where: 'email = ?', whereArgs: ['admin@habitos.app']);
+    if (existe.isEmpty) {
+      await db.insert('usuarios', _usuarioMap(Usuario(
+        id: 'admin', nombre: 'Admin', email: 'admin@habitos.app', password: 'admin123',
+        fechaCreacion: DateTime.now().toString().split(' ')[0], rol: 'admin',
+      )), conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
   }
-
-  // registra un usuario. Devuelve false si el correo ya existe.
-  Future<bool> registrarUsuario({
-    required String nombre,
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> registrarUsuario({required String nombre, required String email, required String password}) async {
     await crearAdministradorInicial();
-    final usuarios = await getUsuarios();
-    if (usuarios.any((u) => u.email.toLowerCase() == email.toLowerCase())) return false;
-    usuarios.add(Usuario(
-      id: DateTime.now().microsecondsSinceEpoch.toString(),
-      nombre: nombre,
-      email: email,
-      password: password,
-      fechaCreacion: DateTime.now().toString().split(' ')[0],
-    ));
-    await guardarUsuarios(usuarios);
+    final db = await database;
+    final existe = await db.query('usuarios', where: 'lower(email) = ?', whereArgs: [email.toLowerCase()]);
+    if (existe.isNotEmpty) return false;
+    await db.insert('usuarios', _usuarioMap(Usuario(
+      id: DateTime.now().microsecondsSinceEpoch.toString(), nombre: nombre, email: email,
+      password: password, fechaCreacion: DateTime.now().toString().split(' ')[0],
+    )));
     return true;
   }
-
-  // comprueba email/nombre y contraseña.
   Future<Usuario?> comprobarAcceso(String identificador, String password) async {
     await crearAdministradorInicial();
-    final usuarios = await getUsuarios();
-    for (final usuario in usuarios) {
-      if ((usuario.email.toLowerCase() == identificador.toLowerCase() ||
-              usuario.nombre.toLowerCase() == identificador.toLowerCase()) &&
-          usuario.password == password) {
-        return usuario;
-      }
-    }
-    return null;
+    final db = await database;
+    final filas = await db.query('usuarios', where: '(lower(email) = ? OR lower(nombre) = ?) AND password = ?',
+      whereArgs: [identificador.toLowerCase(), identificador.toLowerCase(), password], limit: 1);
+    return filas.isEmpty ? null : _usuarioDesdeFila(filas.first);
   }
-
-  // elimina un usuario por su identificador (no elimina admin).
   Future<void> eliminarUsuario(String id) async {
-    final usuarios = await getUsuarios();
-    usuarios.removeWhere((u) => u.id == id && !u.esAdministrador);
-    await guardarUsuarios(usuarios);
+    final db = await database;
+    await db.delete('usuarios', where: 'id = ? AND rol != ?', whereArgs: [id, 'admin']);
   }
 
-  // devuelve solo los hábitos de un usuario.
+  // CRUD de hábitos.
+  Future<List<Habito>> getHabitos() async {
+    final db = await database;
+    final filas = await db.query('habitos', orderBy: 'nombre');
+    return filas.map(_habitoDesdeFila).toList();
+  }
   Future<List<Habito>> getHabitosUsuario(String usuarioId) async {
-    final todos = await getHabitos();
-    // los hábitos antiguos sin propietario se asignan al primer usuario que entra.
-    bool hayCambios = false;
-    for (final habito in todos) {
-      if (habito.usuarioId == null) {
-        habito.usuarioId = usuarioId;
-        hayCambios = true;
+    final db = await database;
+    final filas = await db.query('habitos', where: 'usuario_id = ?', whereArgs: [usuarioId], orderBy: 'nombre');
+    return filas.map(_habitoDesdeFila).toList();
+  }
+  Future<void> guardarHabitos(List<Habito> habitos) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('habitos');
+      for (final h in habitos) {
+        if (h.usuarioId == null || h.usuarioId!.isEmpty) continue;
+        await txn.insert('habitos', _habitoMap(h), conflictAlgorithm: ConflictAlgorithm.replace);
+        await _guardarEstadistica(txn, h);
       }
-    }
-    if (hayCambios) await guardarHabitos(todos);
-    return todos.where((h) => h.usuarioId == usuarioId).toList();
+    });
   }
-
-  // guarda hábitos de un usuario sin borrar los de los demás.
   Future<void> guardarHabitosUsuario(String usuarioId, List<Habito> habitosUsuario) async {
-    final todos = await getHabitos();
-    todos.removeWhere((h) => h.usuarioId == usuarioId);
-    for (final habito in habitosUsuario) {
-      habito.usuarioId ??= usuarioId;
-      todos.add(habito);
-    }
-    await guardarHabitos(todos);
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('habitos', where: 'usuario_id = ?', whereArgs: [usuarioId]);
+      for (final h in habitosUsuario) {
+        h.usuarioId = usuarioId;
+        await txn.insert('habitos', _habitoMap(h), conflictAlgorithm: ConflictAlgorithm.replace);
+        await _guardarEstadistica(txn, h);
+      }
+    });
+  }
+  Future<List<Map<String, Object?>>> getEstadisticas() async {
+    final db = await database;
+    return db.rawQuery('''SELECT estadisticas.*, habitos.nombre AS nombre_habito
+      FROM estadisticas INNER JOIN habitos ON estadisticas.habito_id = habitos.id
+      ORDER BY total_dias_completados DESC''');
   }
 
-  // Borrar todas las preferencias guardadas
   Future<void> borrarTodo() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    final db = await database;
+    await db.delete('estadisticas');
+    await db.delete('habitos');
+    await db.delete('usuarios');
+    final p = await preferencias.SharedPreferences.getInstance();
+    await p.clear();
+    await crearAdministradorInicial();
   }
 
-  // --- CONTADOR DE APERTURAS ---
-  Future<int> getnumeroAperturas() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(Claves.numeroAperturas) ?? 0;
-  }
-
-  Future<void> incrementarAperturas() async {
-    final prefs = await SharedPreferences.getInstance();
-    int actual = prefs.getInt(Claves.numeroAperturas) ?? 0;
-    await prefs.setInt(Claves.numeroAperturas, actual + 1);
-  }
+  Future<int> getnumeroAperturas() => getNumeroAperturas();
+  Future<void> incrementarAperturas() => registrarApertura();
 }
